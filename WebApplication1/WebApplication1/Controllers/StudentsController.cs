@@ -6,6 +6,9 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using WebApplication1.Models;
 using WebApplication1.DAL;
+
+using System.Data.SqlClient;
+
 namespace WebApplication1.Controllers
 {
     [ApiController]
@@ -13,14 +16,35 @@ namespace WebApplication1.Controllers
     public class StudentsController : ControllerBase
     {
         private readonly IDBService _dBService;
+        private List<Student> students;
         public StudentsController(IDBService dBService)
         {
             _dBService = dBService;
+            students = new List<Student>();
         }
-        [HttpGet]
-        public IActionResult GetStudents()
+        [HttpGet("{id}")]
+        public IActionResult GetStudents(int id)
         {
-            return Ok(_dBService.GetStudents());
+            using (var con = new SqlConnection("Data Source=DESKTOP-Q6CSP2B\\SQLSERVER;Initial Catalog=CW4;Integrated Security=True;Connect Timeout=30;Encrypt=False;TrustServerCertificate=False;ApplicationIntent=ReadWrite;MultiSubnetFailover=False"))
+            using(var com = new SqlCommand())
+            {
+                com.Connection = con;
+                //com.CommandText = $"select * from Student S inner join Enrollment E on S.IdEnrollment = E.IdEnrollment where S.IndexNumber = {id}";
+                com.CommandText = "select * from Student where IndexNumber = @id";
+                com.Parameters.AddWithValue("id", id);
+                con.Open();
+                var dr = com.ExecuteReader();
+                string str = "";
+                while (dr.Read())
+                {
+                   // str += dr["IdEnrollment"].ToString() + " " + dr["Semester"].ToString() + " " + dr["IdStudy"].ToString() + " " + dr["StartDate"].ToString() + "\n";
+                   str += dr["FirstName"].ToString() + " " + dr["LastName"].ToString() + " " + dr["IndexNumber"].ToString() + " " + dr["BirthDate"].ToString() + "\n" + dr["IdEnrollment"];
+
+                }
+                return Ok(str);
+            }
+
+           
         }
 
         [HttpPost]
